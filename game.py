@@ -288,7 +288,7 @@ class Player:
             old_population.append(agent)
 
         if self.playerFile != 'randomPlayer' and self.playerFile != 'hunterPlayer':
-            sys.stdout.write("  %s avg_fitness: " % self.name)
+            sys.stdout.write("%s F: " % self.name)
             sys.stdout.flush()
 
         # Get a new population of agents by calling
@@ -723,9 +723,12 @@ class Game:
         for game in range(1,nPlays+1):
 
             if trainGames > 0:
-                sys.stdout.write("\nGame %3d/%d..." % (game, trainGames))
+                sys.stdout.write("\n\n--- TRAINING %3d/%d ---" % (game, trainGames))
+                #sys.stdout.write("\nGame %3d/%d..." % (game, trainGames)) ----------------------------------------------------
             else:
-                sys.stdout.write("\nGame %s vs. %s..." % (players[0].name, players[1].name))
+                sys.stdout.write("\n\n--- GAME ---\n%s VERSES %s" % (players[0].name, players[1].name))
+                #sys.stdout.write("\nGame %s vs. %s..." % (players[0].name, players[1].name)) ----------------------------------
+
             sys.stdout.flush()
 
 
@@ -967,11 +970,12 @@ class Game:
                         survivorCount[p] += 1
 
             if survivorCount[0]>survivorCount[1]:
-                sys.stdout.write('won by %s (blue) %d-%d\n' % (players[0].name,survivorCount[0],survivorCount[1]))
+                sys.stdout.write('\nWIN  %d - %d\n' % (survivorCount[0],survivorCount[1]))
             elif survivorCount[1]>survivorCount[0]:
-                sys.stdout.write('won by %s (red) %d-%d\n' % (players[1].name,survivorCount[0],survivorCount[1]))
+                #sys.stdout.write('\nLOSS\n%s:%d - %d:%s\n' % (players[1].name,survivorCount[0],survivorCount[1],players[0].name))
+                sys.stdout.write('\nLOSS %d - %d\n' % (survivorCount[0], survivorCount[1]))
             else:
-                sys.stdout.write('drawn %d-%d\n' % (survivorCount[0],survivorCount[1]))
+                sys.stdout.write('\nDRAW %d - %d\n' % (survivorCount[0],survivorCount[1]))
             sys.stdout.flush()
 
             if trainGames > 0:

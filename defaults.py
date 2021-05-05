@@ -9,7 +9,7 @@ game_params = {
    "player2": "randomPlayer",
 
    # Speed of visualisation ('slow','normal','fast')
-   "visSpeed": 'normal',
+   "visSpeed": 'fast',
 
    # Visualisation resolution
    "visResolution": (720, 480),
