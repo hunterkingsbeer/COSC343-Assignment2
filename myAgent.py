@@ -5,7 +5,7 @@ playerName = "myAgent"
 nPercepts = 75  # This is the number of percepts
 nActions = 5    # This is the number of actions
 
-trainingSchedule = [("random", 51)]
+trainingSchedule = [("random", 74)]
 
 class MyCreature:
 
@@ -13,14 +13,31 @@ class MyCreature:
         # You should initialise self.chromosome member variable here (whatever you choose it
         # to be - a list/vector/matrix of numbers - and initialise it with some random
         # values
-        self.chromosome = np.random.rand(7)
+        self.chromosome = np.random.rand(10)
+        self.hunter = 0
+        self.flee = 1
         # 0 = hunter gene -- move towards enemy
-        # 1 = scared gene -- move from enemy
-        # 2 = friendly gene -- move to friends
-        # 3 = wall gene -- move from wall
-        # 4 = hungry gene -- move towards enemy
-        # 5 = chomp gene -- eat food
-        # 6 = exploration -- essentially random movement
+        # 1 = flee gene -- move from enemy
+
+        self.social = 2
+        self.antisocial = 3
+        # 2 = social gene -- move to friends
+        # 3 = antisocial gene -- move from friends
+
+        self.indoors = 4
+        self.outdoors = 5
+        # 4 = indoors gene -- move to wall
+        # 5 = outdoors gene -- move from wall
+
+        self.hungry = 6
+        self.full = 7
+        # 6 = hungry gene -- move towards food
+        # 7 = full gene -- move from food
+
+        self.chomp = 8
+        self.exploration = 9
+        # 8 = chomp gene -- eat food
+        # 9 = exploration -- essentially random movement
 
     def AgentFunction(self, percepts):
         actions = [0, 0, 0, 0, 0]  # left, up, right, down, eat
@@ -36,35 +53,42 @@ class MyCreature:
             for col in range(5):
                 creature = creaturePerc[row][col] if creaturePerc[row][col] < 0 else 0  # X > 0 = FRIEND. X < 0 = ENEMY
                 if creature < 0:  # ENEMY
-                    #print("ENEMY")
+
+                    # print("ENEMY")
                     # for some reason works REALLY well without these two on here
-                    self.alterActions(row, col, 0, abs(creature), True, actions)  # HUNTER GENE should be true
-                    #self.alterActions(row, col, 1, abs(creature), False, actions)  # FLEE GENE
+                    self.alterActions(row, col, self.hunter, abs(creature), True, actions)  # HUNTER GENE
+                    self.alterActions(row, col, self.flee, abs(creature), False, actions)  # FLEE GENE
 
                 elif creature > 0:  # FRIEND
-                    #print("FRIEND")
-                    self.alterActions(row, col, 2, creature, True, actions)  # FRIENDLY GENE
+
+                    # print("FRIEND")
+                    self.alterActions(row, col, self.social, creature, True, actions)  # FRIENDLY GENE
+                    self.alterActions(row, col, self.antisocial, creature, True, actions)  # ANTISOCIAL GENE
 
                 wall = wallPerc[row][col]
                 if wall == 1:  # WALL
-                    #print("WALL")
-                    self.alterActions(row, col, 3, wall, False, actions)  # WALL GENE
+
+                    # print("WALL")
+                    self.alterActions(row, col, self.indoors, wall, True, actions)  # INDOORS GENE
+                    self.alterActions(row, col, self.outdoors, wall, False, actions)  # OUTDOORS GENE
 
                 food = foodPerc[row][col]
                 if food == 1:  # FOOD
-                    #print("FOOD")
-                    self.alterActions(row, col, 4, food, True, actions)  # HUNGRY GENE
 
-        #print(str(actions))
+                    # print("FOOD")
+                    self.alterActions(row, col, self.hungry, food, True, actions)  # HUNGRY GENE
+                    self.alterActions(row, col, self.full, food, False, actions)  # HUNGRY GENE
+
+        # print(str(actions))
         return actions
 
     def alterActions(self, col, row, type, percep, towards, actions):
         actionVal = self.chromosome[type] * percep
 
         if col == 2 and row == 2:  # center
-            actions[4] += self.chromosome[5] * percep  # CHOMP GENE
+            actions[4] += self.chromosome[self.chomp] * percep  # CHOMP GENE
         else:
-            if towards:  # move towards percep object
+            if towards:  # move towards percepts object
                 if self.isLeft(col):  # left
                     actions[0] += actionVal
                 else:  # right
@@ -74,7 +98,7 @@ class MyCreature:
                     actions[3] += actionVal
                 else:  # up
                     actions[1] += actionVal
-            else:  # move from percep object
+            else:  # move from percepts object
                 if self.isLeft(col):
                     actions[2] += actionVal
                 else:
@@ -99,16 +123,16 @@ class MyCreature:
 
 def newGeneration(old_population):
     # ---------------------------------------------------------------------------------------------- THE VALUES --------
-    mutationRate = 0.5  # 0 to 1, representing a percentage -- Default 0.5
+    mutationRate = 0.2  # 0 to 1, representing a percentage -- Default 0.5
     elitismRate = 0.25  # 0 to 1, representing a percentage -- Default 0.25
 
-    printStats = False  # for chromosome stats
+    printStats = True  # for chromosome stats
     # This function should also return average fitness of the old_population
     N = len(old_population)
 
     # Fitness for all agents
     fitness = np.zeros((N))
-    avgGenes = [0,0,0,0,0,0,0]
+    avgGenes = np.zeros(10)
 
     # fitness stats
     food = 0
@@ -116,8 +140,9 @@ def newGeneration(old_population):
     movements = 0
     bounces = 0
     turns = 0
+    size = 0
 
-    if printStats: print("\nINDEX: FITNESS ------------------")  # -------------- FITNESS FUNCTION ---
+    # --------------------------------------------------------------------------------------- FITNESS FUNCTION ---------
     for n, creature in enumerate(old_population):
         # creature.alive (boolean), creature.turn (int), creature.size (int), creature.strawb_eats (int),
         # creature.enemy_eats (int), creature.squares_visited (int), creature.bounces (int))
@@ -126,20 +151,21 @@ def newGeneration(old_population):
         movements += creature.squares_visited
         bounces += creature.bounces
         turns += creature.turn
+        size += creature.size
 
-        """fitness[n] += 50 if creature.alive else (creature.turn * 0.5)
+        # 50 + 45 + 30(i guess?) + 30 (i guess?) =
+        fitness[n] += 50 if creature.alive else (creature.turn * 0.5)
         fitness[n] += creature.strawb_eats * 5
         fitness[n] += creature.enemy_eats * 10
-        fitness[n] += creature.squares_visited"""
+        fitness[n] += creature.squares_visited
 
-        fitness[n] += 60 if creature.alive else (creature.turn * 0.55)  # 50 and 0.5
+        """fitness[n] += 60 if creature.alive else (creature.turn * 0.55)  # 50 and 0.5
         #fitness[n] += 30 if creature.alive else 0
         fitness[n] += creature.strawb_eats * 7  # 5
         fitness[n] += creature.enemy_eats * 10  # 10
-        #fitness[n] += creature.squares_visited  # 1
+        #fitness[n] += creature.squares_visited  # 1"""
 
         if printStats:
-            print(str(n) + ": " + str(fitness[n]))
             for i in range(len(creature.chromosome)):
                 avgGenes[i] += creature.chromosome[i]
 
@@ -147,14 +173,25 @@ def newGeneration(old_population):
     topLen = len(topIndexes)
 
     # ---------------------------------------------------------------------------------
-    #print("\n\nfood: " + str(food/N) + ". Kills: " + str(kills/N) + ". Movements: " + str(movements/N) + ". Bounces: " + str(bounces/N) + ". Turns: " + str(turns/N))
+    print("\n\nAVG STATS ---------------"
+          "\nFood: " + str(round(food/N, 2)) +
+          ", Kills: " + str(round(kills/N, 2)) +
+          ", Movements: " + str(round(movements/N, 2)) +
+          ",\nBounces: " + str(round(bounces/N, 2)) +
+          ", Turns: " + str(round(turns/N, 2)) +
+          ", Size: " + str(round(size/N, 2)))
 
     if printStats:
-        print("TOP FITNESS INDEXES: " + str(topIndexes))
-        print("GENE: AVG ------------------")
+        geneNames = ["HUNTER: ", "FLEE: ",
+                     "SOCIAL: ", "ANTISOCIAL: ",
+                     "INDOORS: ", "OUTDOORS: ",
+                     "HUNGRY: ", "FULL: ",
+                     "CHOMP: ", "EXPLORE: "]
+        #print("TOP FITNESS INDEXES: " + str(topIndexes))
+        print("\nAVG GENES ------------------")
         for gene in range(len(avgGenes)):
             avgGenes[gene] = avgGenes[gene] / N
-            print("gene" + str(gene) + ": " + str(avgGenes[gene]))
+            print(geneNames[gene] + str(round(avgGenes[gene], 2)))
 
     # -------------------------------------------------------------- NEW POPULATION ---
     new_population = list()
@@ -177,6 +214,8 @@ def newGeneration(old_population):
 
     # At the end you need to compute average fitness and return it along with your new population
     avg_fitness = np.mean(fitness)
+
+    print("\nFITNESS: ")
     return new_population, avg_fitness
 
 

@@ -723,7 +723,7 @@ class Game:
         for game in range(1,nPlays+1):
 
             if trainGames > 0:
-                sys.stdout.write("\n\n--- TRAINING %3d/%d ---" % (game, trainGames))
+                sys.stdout.write("\n\n-------------------------------------------------\n--- TRAINING %3d/%d ---" % (game, trainGames))
                 #sys.stdout.write("\nGame %3d/%d..." % (game, trainGames)) ----------------------------------------------------
             else:
                 sys.stdout.write("\n\n--- GAME ---\n%s VERSES %s" % (players[0].name, players[1].name))
