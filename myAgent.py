@@ -244,24 +244,28 @@ def graphPlot(avg_fitness, avgGenes):
     fitnessGraph = np.append(fitnessGraph, avg_fitness)
 
     if currentGen == generations:
-        numGens = np.arange(0, generations)
+        numGens = np.arange(0, generations)  # needs to be an np array
 
+        fig, axs = plt.subplots(2)  # [0] is the fitness graph, [1] is the gene graph
+
+        # ------ FITNESS PLOT
         z = np.polyfit(numGens, fitnessGraph, 1)
         p = np.poly1d(z)
-        plt.plot(numGens, p(numGens), "k-")  # line of best fit
+        axs[0].plot(numGens, p(numGens), "k-")  # line of best fit
+        axs[0].plot(numGens, fitnessGraph)  # line plot
 
-        plt.plot(numGens, fitnessGraph)  # line plot
+        axs[0].sharex(axs[1])
+        axs[0].set_ylabel('Fitness')
+        axs[0].set_title('Change in Fitness over ' + str(generations) + ' Generations')
 
-        """
-        geneGraphArr = np.asarray(geneGraph)
-
+        # ------ GENE PLOT
+        geneGraphArr = np.asarray(geneGraph)  # needs to be an np array
         for i in range(10):
-            plt.plot(numGens, geneGraphArr[:, i])
-        """
+            axs[1].plot(numGens, geneGraphArr[:, i])
+        axs[1].set_xlabel('Generations')
+        axs[1].set_ylabel('Gene Value')
+        axs[1].set_title('Change in Genes over ' + str(generations) + ' Generations')
 
-        plt.xlabel('Generations')
-        plt.ylabel('Fitness')
-        plt.title('Change in Fitness over ' + str(generations) + ' Generations')
         plt.show()
 
 
