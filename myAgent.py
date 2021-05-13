@@ -1,18 +1,21 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import random
 
 playerName = "myAgent"
 nPercepts = 75  # This is the number of percepts
 nActions = 5    # This is the number of actions
+currentGen = 0  # Tracks current generation
+fitnessGraph = np.array([])  # Holds the average fitness for each generation
+geneGraph = []
 
-trainingSchedule = [("random", 75)]
+
+generations = 10
+trainingSchedule = [("random", generations)]
 
 class MyCreature:
-
     def __init__(self):
-        # You should initialise self.chromosome member variable here (whatever you choose it
-        # to be - a list/vector/matrix of numbers - and initialise it with some random
-        # values
+
         self.chromosome = np.random.rand(10)
 
         self.hunter = 0
@@ -121,8 +124,9 @@ class MyCreature:
             return False
 
 def newGeneration(old_population):
+
     # ---------------------------------------------------------------------------------------------- THE VALUES --------
-    mutationRate = 0.2  # 0 to 1, representing a percentage -- Default 0.5
+    mutationRate = 0.1 # 0 to 1, representing a percentage -- Default 0.5
     elitismRate = 0.25  # 0 to 1, representing a percentage -- Default 0.25
 
     printStats = True  # for chromosome stats
@@ -159,16 +163,19 @@ def newGeneration(old_population):
         fitness[n] += creature.alive 
         """
 
-        """ 
+
         # THE ORIGINAL 
         # MAX: 50 + 45 + 30(i guess?) + 30 (i guess?) =
         fitness[n] += 50 if creature.alive else (creature.turn * 0.5)
         fitness[n] += creature.strawb_eats * 5
         fitness[n] += creature.enemy_eats * 10
-        fitness[n] += creature.squares_visited"""
+        fitness[n] += creature.squares_visited
 
-        #fitness[n] += creature.squares_visited
+        """
         fitness[n] += creature.enemy_eats * 5
+        fitness[n] += creature.size * 10
+        fitness[n] += creature.turn * 0.2
+        fitness[n] += 25 if creature.alive else 0"""
 
         if printStats:
             for i in range(len(creature.chromosome)):
@@ -218,9 +225,44 @@ def newGeneration(old_population):
 
     # At the end you need to compute average fitness and return it along with your new population
     avg_fitness = np.mean(fitness)
+    graphPlot(avg_fitness, avgGenes)
 
     print("\nFITNESS: ")
     return new_population, avg_fitness
+
+
+# plots my fitness against the generations
+def graphPlot(avg_fitness, avgGenes):
+    global currentGen
+    global fitnessGraph
+    global geneGraph
+    global generations
+
+    currentGen += 1
+
+    geneGraph.append(avgGenes)
+    fitnessGraph = np.append(fitnessGraph, avg_fitness)
+
+    if currentGen == generations:
+        numGens = np.arange(0, generations)
+
+        z = np.polyfit(numGens, fitnessGraph, 1)
+        p = np.poly1d(z)
+        plt.plot(numGens, p(numGens), "k-")  # line of best fit
+
+        plt.plot(numGens, fitnessGraph)  # line plot
+
+        """
+        geneGraphArr = np.asarray(geneGraph)
+
+        for i in range(10):
+            plt.plot(numGens, geneGraphArr[:, i])
+        """
+
+        plt.xlabel('Generations')
+        plt.ylabel('Fitness')
+        plt.title('Change in Fitness over ' + str(generations) + ' Generations')
+        plt.show()
 
 
 # chance = number between 0 and 1 (float)
@@ -240,6 +282,18 @@ def crossoverChromosome(chromosome1, chromosome2, crossType):
     if crossType == "point":
         for i in range(len(chromosome1)):
             newChromosome.append(random.choice(parents)[i])
+
+    # crosses entire genes (keeps the pair for/against genes)
+    elif crossType == "gene":
+        for i in range(len(chromosome1)):
+            pass
+
+    elif crossType == "half":
+        for i in range(len(chromosome1)):
+            if i > len(chromosome1)/2:
+                newChromosome.append(chromosome1[i])
+            else:
+                newChromosome.append(chromosome2[i])
 
     return newChromosome
 

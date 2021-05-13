@@ -12,6 +12,7 @@ maxTrainingEpochs = 1000
 maxActions = 5
 game_rnd_seed = 0
 
+
 def alarm_handler(signum, frame):
     raise RuntimeError("Time out")
 
