@@ -10,7 +10,7 @@ fitnessGraph = np.array([])  # Holds the average fitness for each generation
 geneGraph = []
 
 
-generations = 10
+generations = 100
 trainingSchedule = [("random", generations)]
 
 class MyCreature:
@@ -149,6 +149,7 @@ def newGeneration(old_population):
     for n, creature in enumerate(old_population):
         # creature.alive (boolean), creature.turn (int), creature.size (int), creature.strawb_eats (int),
         # creature.enemy_eats (int), creature.squares_visited (int), creature.bounces (int))
+
         food += creature.strawb_eats
         kills += creature.enemy_eats
         movements += creature.squares_visited
@@ -163,19 +164,23 @@ def newGeneration(old_population):
         fitness[n] += creature.alive 
         """
 
-
-        # THE ORIGINAL 
+        """ ORIGINAL FITNESS
         # MAX: 50 + 45 + 30(i guess?) + 30 (i guess?) =
         fitness[n] += 50 if creature.alive else (creature.turn * 0.5)
         fitness[n] += creature.strawb_eats * 5
         fitness[n] += creature.enemy_eats * 10
-        fitness[n] += creature.squares_visited
-
+        fitness[n] += creature.squares_visited 
         """
-        fitness[n] += creature.enemy_eats * 5
+
+        #""" NEW FITNESS
+        fitness[n] += creature.strawb_eats * 5
         fitness[n] += creature.size * 10
         fitness[n] += creature.turn * 0.2
-        fitness[n] += 25 if creature.alive else 0"""
+        fitness[n] += 25 if creature.alive else 0
+        #"""
+
+        # test if bias
+        # fitness[n] = 0
 
         if printStats:
             for i in range(len(creature.chromosome)):
@@ -248,7 +253,7 @@ def graphPlot(avg_fitness, avgGenes):
 
         fig, axs = plt.subplots(2)  # [0] is the fitness graph, [1] is the gene graph
 
-        # ------ FITNESS PLOT
+        # ------------------ FITNESS PLOT
         z = np.polyfit(numGens, fitnessGraph, 1)
         p = np.poly1d(z)
         axs[0].plot(numGens, p(numGens), "k-")  # line of best fit
@@ -258,14 +263,33 @@ def graphPlot(avg_fitness, avgGenes):
         axs[0].set_ylabel('Fitness')
         axs[0].set_title('Change in Fitness over ' + str(generations) + ' Generations')
 
-        # ------ GENE PLOT
+        # ------------------ GENE PLOT
+        colors = ['red', 'blue',  # hunter, flee
+                  'cyan', 'olive',  # social, antisocial
+                  'gray', 'brown',  # indoor, outdoor
+                  'green', 'purple',  # hungry, full
+                  'pink', 'orange']  # chomp, explore
+        genes = ["Hunter", "Flee",
+                 "Social", "AntiSocial",
+                 "Indoors", "Outdoors",
+                 "Hungry", "Full",
+                 "Chomp", "Explore"]
+
         geneGraphArr = np.asarray(geneGraph)  # needs to be an np array
         for i in range(10):
-            axs[1].plot(numGens, geneGraphArr[:, i])
+            axs[1].plot(numGens, geneGraphArr[:, i], 'tab:' + colors[i])
+            axs[1].legend(['Hunter', 'Flee',
+                           'Social', 'Antisocial',
+                           'Indoors', 'Outdoors',
+                           'Hungry', 'Full',
+                           'Chomp', 'Explore'], title='Genes', bbox_to_anchor=(1.05, 1.5), loc='upper left')
+
         axs[1].set_xlabel('Generations')
         axs[1].set_ylabel('Gene Value')
+
         axs[1].set_title('Change in Genes over ' + str(generations) + ' Generations')
 
+        fig.set_dpi(100)
         plt.show()
 
 
