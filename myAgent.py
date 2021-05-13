@@ -5,7 +5,7 @@ playerName = "myAgent"
 nPercepts = 75  # This is the number of percepts
 nActions = 5    # This is the number of actions
 
-trainingSchedule = [("random", 74)]
+trainingSchedule = [("random", 75)]
 
 class MyCreature:
 
@@ -14,6 +14,7 @@ class MyCreature:
         # to be - a list/vector/matrix of numbers - and initialise it with some random
         # values
         self.chromosome = np.random.rand(10)
+
         self.hunter = 0
         self.flee = 1
         # 0 = hunter gene -- move towards enemy
@@ -43,7 +44,7 @@ class MyCreature:
         actions = [0, 0, 0, 0, 0]  # left, up, right, down, eat
         creaturePerc = percepts[:, :, 0]  # creatures. 2,2,0 = player pos. x > 0 = friendly, x < 0 = enemy
         foodPerc = percepts[:, :, 1]  # food. 1 = strawberry, 0 = none
-        wallPerc = percepts[:, :, 2]  # walls. 1 = wall, 0 = clear
+        wallPerc = percepts[:, :, 2]  # walls. 1 = wall, 0 = none
 
         #  exploration, random direction = random * explore gene
         actions[np.random.randint(0,4)] += np.random.rand() * self.chromosome[6]
@@ -55,7 +56,6 @@ class MyCreature:
                 if creature < 0:  # ENEMY
 
                     # print("ENEMY")
-                    # for some reason works REALLY well without these two on here
                     self.alterActions(row, col, self.hunter, abs(creature), True, actions)  # HUNTER GENE
                     self.alterActions(row, col, self.flee, abs(creature), False, actions)  # FLEE GENE
 
@@ -77,9 +77,8 @@ class MyCreature:
 
                     # print("FOOD")
                     self.alterActions(row, col, self.hungry, food, True, actions)  # HUNGRY GENE
-                    self.alterActions(row, col, self.full, food, False, actions)  # HUNGRY GENE
+                    self.alterActions(row, col, self.full, food, False, actions)  # FULL GENE
 
-        # print(str(actions))
         return actions
 
     def alterActions(self, col, row, type, percep, towards, actions):
@@ -153,17 +152,23 @@ def newGeneration(old_population):
         turns += creature.turn
         size += creature.size
 
-        # 50 + 45 + 30(i guess?) + 30 (i guess?) =
+        """ JACKS FITNESS
+        fitness[n] += creature.turn * 0.5
+        fitness[n] += creature.enemy_eats * 9
+        fitness[n] += creature.strawb_eats * 6
+        fitness[n] += creature.alive 
+        """
+
+        """ 
+        # THE ORIGINAL 
+        # MAX: 50 + 45 + 30(i guess?) + 30 (i guess?) =
         fitness[n] += 50 if creature.alive else (creature.turn * 0.5)
         fitness[n] += creature.strawb_eats * 5
         fitness[n] += creature.enemy_eats * 10
-        fitness[n] += creature.squares_visited
+        fitness[n] += creature.squares_visited"""
 
-        """fitness[n] += 60 if creature.alive else (creature.turn * 0.55)  # 50 and 0.5
-        #fitness[n] += 30 if creature.alive else 0
-        fitness[n] += creature.strawb_eats * 7  # 5
-        fitness[n] += creature.enemy_eats * 10  # 10
-        #fitness[n] += creature.squares_visited  # 1"""
+        #fitness[n] += creature.squares_visited
+        fitness[n] += creature.enemy_eats * 5
 
         if printStats:
             for i in range(len(creature.chromosome)):
@@ -187,7 +192,6 @@ def newGeneration(old_population):
                      "INDOORS: ", "OUTDOORS: ",
                      "HUNGRY: ", "FULL: ",
                      "CHOMP: ", "EXPLORE: "]
-        #print("TOP FITNESS INDEXES: " + str(topIndexes))
         print("\nAVG GENES ------------------")
         for gene in range(len(avgGenes)):
             avgGenes[gene] = avgGenes[gene] / N
