@@ -850,6 +850,9 @@ class Game:
                         # Action 4 is eat
                         if action==4 and self.food_map[x,y] != 0:
                             self.food_map[x, y] = 0
+                            """if avatar.energy != 1 and avatar.strawb_eats != 1:
+                                avatar.energy -= 1 # ----------------------------------------------------------------------- SHOULD BE +=
+                                avatar.strawb_eats -= 1 # ------------------------------------------------------------------ += """
                             avatar.energy += 1
                             avatar.strawb_eats += 1
 

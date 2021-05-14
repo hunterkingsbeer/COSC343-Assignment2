@@ -8,40 +8,31 @@ nActions = 5    # This is the number of actions
 currentGen = 0  # Tracks current generation
 fitnessGraph = np.array([])  # Holds the average fitness for each generation
 geneGraph = []
+actionsGraph = []
 
 
-generations = 100
-trainingSchedule = [("random", generations)]
+generations = 250
+trainingAgent = "random"
+trainingSchedule = [(trainingAgent, generations)]
 
 class MyCreature:
     def __init__(self):
-
         self.chromosome = np.random.rand(10)
 
-        self.hunter = 0
-        self.flee = 1
-        # 0 = hunter gene -- move towards enemy
-        # 1 = flee gene -- move from enemy
+        self.hunter = 0  # -- move towards enemy
+        self.flee = 1  # -- move from enemy
 
-        self.social = 2
-        self.antisocial = 3
-        # 2 = social gene -- move to friends
-        # 3 = antisocial gene -- move from friends
+        self.social = 2  # -- move to friends
+        self.antisocial = 3  # -- move from friends
 
-        self.indoors = 4
-        self.outdoors = 5
-        # 4 = indoors gene -- move to wall
-        # 5 = outdoors gene -- move from wall
+        self.indoors = 4  # -- move to wall
+        self.outdoors = 5  # -- move from wall
 
-        self.hungry = 6
-        self.full = 7
-        # 6 = hungry gene -- move towards food
-        # 7 = full gene -- move from food
+        self.hungry = 6  # -- move towards food
+        self.full = 7  # -- move from food
 
-        self.chomp = 8
-        self.exploration = 9
-        # 8 = chomp gene -- eat food
-        # 9 = exploration -- essentially random movement
+        self.chomp = 8  # -- eat food
+        self.exploration = 9  # -- random movement
 
     def AgentFunction(self, percepts):
         actions = [0, 0, 0, 0, 0]  # left, up, right, down, eat
@@ -59,33 +50,34 @@ class MyCreature:
                 if creature < 0:  # ENEMY
 
                     # print("ENEMY")
-                    self.alterActions(row, col, self.hunter, abs(creature), True, actions)  # HUNTER GENE
-                    self.alterActions(row, col, self.flee, abs(creature), False, actions)  # FLEE GENE
+                    self.alterActions(row, col, self.hunter, abs(creature), actions)  # HUNTER GENE
+                    self.alterActions(row, col, self.flee, abs(creature), actions)  # FLEE GENE
 
                 elif creature > 0:  # FRIEND
 
                     # print("FRIEND")
-                    self.alterActions(row, col, self.social, creature, True, actions)  # FRIENDLY GENE
-                    self.alterActions(row, col, self.antisocial, creature, True, actions)  # ANTISOCIAL GENE
+                    self.alterActions(row, col, self.social, creature, actions)  # FRIENDLY GENE
+                    self.alterActions(row, col, self.antisocial, creature, actions)  # ANTISOCIAL GENE
 
                 wall = wallPerc[row][col]
                 if wall == 1:  # WALL
 
                     # print("WALL")
-                    self.alterActions(row, col, self.indoors, wall, True, actions)  # INDOORS GENE
-                    self.alterActions(row, col, self.outdoors, wall, False, actions)  # OUTDOORS GENE
+                    self.alterActions(row, col, self.indoors, wall, actions)  # INDOORS GENE
+                    self.alterActions(row, col, self.outdoors, wall, actions)  # OUTDOORS GENE
 
                 food = foodPerc[row][col]
                 if food == 1:  # FOOD
 
                     # print("FOOD")
-                    self.alterActions(row, col, self.hungry, food, True, actions)  # HUNGRY GENE
-                    self.alterActions(row, col, self.full, food, False, actions)  # FULL GENE
+                    self.alterActions(row, col, self.hungry, food, actions)  # HUNGRY GENE
+                    self.alterActions(row, col, self.full, food, actions)  # FULL GENE
 
         return actions
 
-    def alterActions(self, col, row, type, percep, towards, actions):
+    def alterActions(self, col, row, type, percep, actions):
         actionVal = self.chromosome[type] * percep
+        towards = type % 2 == 0  # if its an even numbered index gene, it moves towards
 
         if col == 2 and row == 2:  # center
             actions[4] += self.chromosome[self.chomp] * percep  # CHOMP GENE
@@ -126,8 +118,8 @@ class MyCreature:
 def newGeneration(old_population):
 
     # ---------------------------------------------------------------------------------------------- THE VALUES --------
-    mutationRate = 0.1 # 0 to 1, representing a percentage -- Default 0.5
-    elitismRate = 0.25  # 0 to 1, representing a percentage -- Default 0.25
+    mutationRate = 0.25 # 0 to 1, representing a percentage -- Default 0.5
+    elitismRate = 0.5  # 0 to 1, representing a percentage -- Default 0.25
 
     printStats = True  # for chromosome stats
     # This function should also return average fitness of the old_population
@@ -136,26 +128,30 @@ def newGeneration(old_population):
     # Fitness for all agents
     fitness = np.zeros((N))
     avgGenes = np.zeros(10)
+    avgActions = np.zeros(6)
 
     # fitness stats
     food = 0
     kills = 0
-    movements = 0
-    bounces = 0
-    turns = 0
     size = 0
+    turns = 0
+    visits = 0
+    bounces = 0
+
+
 
     # --------------------------------------------------------------------------------------- FITNESS FUNCTION ---------
     for n, creature in enumerate(old_population):
         # creature.alive (boolean), creature.turn (int), creature.size (int), creature.strawb_eats (int),
         # creature.enemy_eats (int), creature.squares_visited (int), creature.bounces (int))
 
-        food += creature.strawb_eats
-        kills += creature.enemy_eats
-        movements += creature.squares_visited
-        bounces += creature.bounces
-        turns += creature.turn
-        size += creature.size
+        avgActions[0] += creature.strawb_eats
+        avgActions[1] += creature.enemy_eats
+        avgActions[2] += creature.size
+        avgActions[3] += creature.turn
+        avgActions[4] += creature.squares_visited
+        avgActions[5] += creature.bounces
+
 
         """ JACKS FITNESS
         fitness[n] += creature.turn * 0.5
@@ -179,8 +175,7 @@ def newGeneration(old_population):
         fitness[n] += 25 if creature.alive else 0
         #"""
 
-        # test if bias
-        # fitness[n] = 0
+        #fitness[n] += creature.strawb_eats * 100
 
         if printStats:
             for i in range(len(creature.chromosome)):
@@ -190,24 +185,25 @@ def newGeneration(old_population):
     topLen = len(topIndexes)
 
     # ---------------------------------------------------------------------------------
-    print("\n\nAVG STATS ---------------"
-          "\nFood: " + str(round(food/N, 2)) +
-          ", Kills: " + str(round(kills/N, 2)) +
-          ", Movements: " + str(round(movements/N, 2)) +
-          ",\nBounces: " + str(round(bounces/N, 2)) +
-          ", Turns: " + str(round(turns/N, 2)) +
-          ", Size: " + str(round(size/N, 2)))
 
     if printStats:
+        print("\n------------------------ AVG ACTIONS ")
+        actionNames = ["FOOD: ", "KILLS: ", "SIZE: ",
+                       "TURNS: ", "VISITS: ", "BOUNCES: "]
+        for action in range(len(avgActions)):
+            avgActions[action] = round(avgActions[action] / N, 2)
+            print(actionNames[action] + str(avgActions[action]))
+
+        print("\n------------------------ AVG GENES ")
         geneNames = ["HUNTER: ", "FLEE: ",
                      "SOCIAL: ", "ANTISOCIAL: ",
                      "INDOORS: ", "OUTDOORS: ",
                      "HUNGRY: ", "FULL: ",
                      "CHOMP: ", "EXPLORE: "]
-        print("\nAVG GENES ------------------")
+
         for gene in range(len(avgGenes)):
-            avgGenes[gene] = avgGenes[gene] / N
-            print(geneNames[gene] + str(round(avgGenes[gene], 2)))
+            avgGenes[gene] = round(avgGenes[gene] / N, 2)
+            print(geneNames[gene] + str(avgGenes[gene]))
 
     # -------------------------------------------------------------- NEW POPULATION ---
     new_population = list()
@@ -230,22 +226,24 @@ def newGeneration(old_population):
 
     # At the end you need to compute average fitness and return it along with your new population
     avg_fitness = np.mean(fitness)
-    graphPlot(avg_fitness, avgGenes)
+    graphPlot(avg_fitness, avgGenes, avgActions)
 
     print("\nFITNESS: ")
     return new_population, avg_fitness
 
 
 # plots my fitness against the generations
-def graphPlot(avg_fitness, avgGenes):
+def graphPlot(avg_fitness, avgGenes, avgActions):
     global currentGen
     global fitnessGraph
     global geneGraph
     global generations
+    global trainingAgent
 
     currentGen += 1
 
     geneGraph.append(avgGenes)
+    actionsGraph.append(avgActions)
     fitnessGraph = np.append(fitnessGraph, avg_fitness)
 
     if currentGen == generations:
@@ -259,9 +257,11 @@ def graphPlot(avg_fitness, avgGenes):
         axs[0].plot(numGens, p(numGens), "k-")  # line of best fit
         axs[0].plot(numGens, fitnessGraph)  # line plot
 
-        axs[0].sharex(axs[1])
+        axs[0].legend(['Line of Best Fit', 'Generations'], title='Lines', bbox_to_anchor=(1.05, 1.05), loc='upper left')
+        axs[1].set_xlabel('Generations')
         axs[0].set_ylabel('Fitness')
-        axs[0].set_title('Change in Fitness over ' + str(generations) + ' Generations')
+        axs[0].set_title('Training against ' + str(trainingAgent)
+                         + '\nChange in Fitness over ' + str(generations) + ' Generations')
 
         # ------------------ GENE PLOT
         colors = ['red', 'blue',  # hunter, flee
@@ -269,27 +269,50 @@ def graphPlot(avg_fitness, avgGenes):
                   'gray', 'brown',  # indoor, outdoor
                   'green', 'purple',  # hungry, full
                   'pink', 'orange']  # chomp, explore
-        genes = ["Hunter", "Flee",
-                 "Social", "AntiSocial",
-                 "Indoors", "Outdoors",
-                 "Hungry", "Full",
-                 "Chomp", "Explore"]
 
         geneGraphArr = np.asarray(geneGraph)  # needs to be an np array
         for i in range(10):
             axs[1].plot(numGens, geneGraphArr[:, i], 'tab:' + colors[i])
+
             axs[1].legend(['Hunter', 'Flee',
                            'Social', 'Antisocial',
                            'Indoors', 'Outdoors',
                            'Hungry', 'Full',
-                           'Chomp', 'Explore'], title='Genes', bbox_to_anchor=(1.05, 1.5), loc='upper left')
-
+                           'Chomp', 'Explore'], title='Genes', bbox_to_anchor=(1.05, 1.05), loc='upper left')
         axs[1].set_xlabel('Generations')
         axs[1].set_ylabel('Gene Value')
-
         axs[1].set_title('Change in Genes over ' + str(generations) + ' Generations')
 
-        fig.set_dpi(100)
+        # ------------------ ACTIONS PLOT
+        """
+        colors = ['green', 'red',  # food, kills
+                  'blue', 'pink',  # size, turns
+                  'orange', 'purple']  # visits, bounces
+
+        actionsGraphArr = np.asarray(actionsGraph)  # needs to be an np array
+        for j in range(6):
+            if j < 3:  # food, kills and size scaled up 10x to be visually near other values
+                axs[2].plot(numGens, actionsGraphArr[:, j]*10, 'tab:' + colors[j])
+            elif j == 3:  # turns scaled down 0.1x to be visually near other values
+                axs[2].plot(numGens, actionsGraphArr[:, j] * 0.1, 'tab:' + colors[j])
+            elif j == 4:
+                axs[2].plot(numGens, actionsGraphArr[:, j]*0.5, 'tab:' + colors[j])
+            else:
+                axs[2].plot(numGens, actionsGraphArr[:, j], 'tab:' + colors[j])
+
+            axs[2].legend(['Food * 10', 'Kills * 10',
+                           'Size * 10', 'Turns * 0.1',
+                           'Visits * 0.5', 'Bounces'], title='Actions', bbox_to_anchor=(1.05, 1.05), loc='upper left')
+
+        axs[2].set_xlabel('Generations')
+        axs[2].set_ylabel('Action Per Creature Value')
+        axs[2].set_title('Change in Average Actions Per Creature over ' + str(generations) + ' Generations'
+                         '\n(this is more for visual representation than stats)')
+        """
+
+        fig.set_size_inches(10, 9, forward=True)
+
+        plt.tight_layout()
         plt.show()
 
 
