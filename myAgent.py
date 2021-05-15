@@ -11,7 +11,7 @@ geneGraph = []
 actionsGraph = []
 
 
-generations = 250
+generations = 100
 trainingAgent = "random"
 trainingSchedule = [(trainingAgent, generations)]
 
@@ -219,7 +219,7 @@ def newGeneration(old_population):
             parent1 = tournamentParents(old_population, fitness)  # tournament selection
             parent2 = tournamentParents(old_population, fitness)  # tournament selection
 
-            new_creature.chromosome = crossoverChromosome(parent1.chromosome, parent2.chromosome, "point")
+            new_creature.chromosome = crossoverChromosome(parent1.chromosome, parent2.chromosome, "gene")
             new_creature.chromosome = mutation(mutationRate, new_creature.chromosome)
 
         new_population.append(new_creature)
@@ -336,8 +336,11 @@ def crossoverChromosome(chromosome1, chromosome2, crossType):
 
     # crosses entire genes (keeps the pair for/against genes)
     elif crossType == "gene":
-        for i in range(len(chromosome1)):
-            pass
+        for i in range(0, len(chromosome1), 2):
+            parent = random.choice(parents)
+
+            newChromosome.append(parent[i])
+            newChromosome.append(parent[i+1])
 
     elif crossType == "half":
         for i in range(len(chromosome1)):
