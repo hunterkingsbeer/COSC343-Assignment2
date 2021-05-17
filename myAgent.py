@@ -9,7 +9,7 @@ currentGen = 0  # Tracks current generation
 fitnessGraph = np.array([])  # Holds the average fitness for each generation
 geneGraph = []
 actionsGraph = []
-
+highestGraph = np.zeros(7)
 
 generations = 100
 trainingAgent = "random"
@@ -118,8 +118,8 @@ class MyCreature:
 def newGeneration(old_population):
 
     # ---------------------------------------------------------------------------------------------- THE VALUES --------
-    mutationRate = 0.25 # 0 to 1, representing a percentage -- Default 0.5
-    elitismRate = 0.5  # 0 to 1, representing a percentage -- Default 0.25
+    mutationRate = 0.2 # 0 to 1, representing a percentage -- Default 0.2-25
+    elitismRate = 0.4  # 0 to 1, representing a percentage -- Default 0.4-5
 
     printStats = True  # for chromosome stats
     # This function should also return average fitness of the old_population
@@ -129,14 +129,7 @@ def newGeneration(old_population):
     fitness = np.zeros((N))
     avgGenes = np.zeros(10)
     avgActions = np.zeros(6)
-
-    # fitness stats
-    food = 0
-    kills = 0
-    size = 0
-    turns = 0
-    visits = 0
-    bounces = 0
+    highestActions = np.zeros(7)
 
 
 
@@ -146,12 +139,28 @@ def newGeneration(old_population):
         # creature.enemy_eats (int), creature.squares_visited (int), creature.bounces (int))
 
         avgActions[0] += creature.strawb_eats
-        avgActions[1] += creature.enemy_eats
-        avgActions[2] += creature.size
-        avgActions[3] += creature.turn
-        avgActions[4] += creature.squares_visited
-        avgActions[5] += creature.bounces
+        if highestActions[0] < creature.strawb_eats:
+            highestActions[0] = creature.strawb_eats
 
+        avgActions[1] += creature.enemy_eats
+        if highestActions[1] < creature.enemy_eats:
+            highestActions[1] = creature.enemy_eats
+
+        avgActions[2] += creature.size
+        if highestActions[2] < creature.size:
+            highestActions[2] = creature.size
+
+        avgActions[3] += creature.turn
+        if highestActions[3] < creature.turn:
+            highestActions[3] = creature.turn
+
+        avgActions[4] += creature.squares_visited
+        if highestActions[4] < creature.squares_visited:
+            highestActions[4] = creature.squares_visited
+
+        avgActions[5] += creature.bounces
+        if highestActions[5] < creature.bounces:
+            highestActions[5] = creature.bounces
 
         """ JACKS FITNESS
         fitness[n] += creature.turn * 0.5
@@ -169,30 +178,28 @@ def newGeneration(old_population):
         """
 
         #""" NEW FITNESS
-        fitness[n] += creature.strawb_eats * 5
+        fitness[n] += creature.enemy_eats * 8
         fitness[n] += creature.size * 10
-        fitness[n] += creature.turn * 0.2
         fitness[n] += 25 if creature.alive else 0
         #"""
 
-        #fitness[n] += creature.strawb_eats * 100
-
+        if highestActions[6] < fitness[n]:
+            highestActions[6] = fitness[n]
         if printStats:
             for i in range(len(creature.chromosome)):
                 avgGenes[i] += creature.chromosome[i]
 
     topIndexes = sorted(range(len(fitness)), key=lambda i: fitness[i])[-int(len(fitness) * elitismRate):]
-    topLen = len(topIndexes)
 
-    # ---------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------- PRINT STATS
 
     if printStats:
         print("\n------------------------ AVG ACTIONS ")
-        actionNames = ["FOOD: ", "KILLS: ", "SIZE: ",
-                       "TURNS: ", "VISITS: ", "BOUNCES: "]
+        actionNames = ["FOOD | ", "KILLS | ", "SIZE | ",
+                       "TURNS | ", "VISITS | ", "BOUNCES | "]
         for action in range(len(avgActions)):
             avgActions[action] = round(avgActions[action] / N, 2)
-            print(actionNames[action] + str(avgActions[action]))
+            print(actionNames[action] + "AVG: " + str(avgActions[action]) + ", HIGHEST: " + str(highestActions[action]))
 
         print("\n------------------------ AVG GENES ")
         geneNames = ["HUNTER: ", "FLEE: ",
@@ -205,17 +212,17 @@ def newGeneration(old_population):
             avgGenes[gene] = round(avgGenes[gene] / N, 2)
             print(geneNames[gene] + str(avgGenes[gene]))
 
-    # -------------------------------------------------------------- NEW POPULATION ---
+    # ---------------------------------------------------------------------------------- NEW POPULATION
     new_population = list()
     for n in range(N):
 
         # Create new creature
         new_creature = MyCreature()
-        if n < topLen:  # elitism (keep fittest n of population) -----------------------
+        if n < len(topIndexes):  # elitism (keep fittest n of population)
             nextTopFittest = topIndexes.pop(0)
             new_creature = old_population[nextTopFittest]
 
-        else :  # else select other ----------------------------------------------------
+        else :  # else select breeding
             parent1 = tournamentParents(old_population, fitness)  # tournament selection
             parent2 = tournamentParents(old_population, fitness)  # tournament selection
 
@@ -226,21 +233,26 @@ def newGeneration(old_population):
 
     # At the end you need to compute average fitness and return it along with your new population
     avg_fitness = np.mean(fitness)
-    graphPlot(avg_fitness, avgGenes, avgActions)
+    graphPlot(avg_fitness, avgGenes, avgActions, highestActions)
 
     print("\nFITNESS: ")
     return new_population, avg_fitness
 
 
 # plots my fitness against the generations
-def graphPlot(avg_fitness, avgGenes, avgActions):
-    global currentGen
+def graphPlot(avg_fitness, avgGenes, avgActions, highestActions):
     global fitnessGraph
     global geneGraph
+    global highestGraph
+    global currentGen
     global generations
     global trainingAgent
 
     currentGen += 1
+
+    for i in range(len(highestGraph)):
+        if highestGraph[i] < highestActions[i]:
+            highestGraph[i] = highestActions[i]
 
     geneGraph.append(avgGenes)
     actionsGraph.append(avgActions)
@@ -284,6 +296,16 @@ def graphPlot(avg_fitness, avgGenes, avgActions):
         axs[1].set_title('Change in Genes over ' + str(generations) + ' Generations')
 
         # ------------------ ACTIONS PLOT
+        highestActionStr = ("Highest Actions -\nFood Eaten: " + str(highestGraph[0]) +
+                            ", Enemy Eats: " + str(highestGraph[1]) +
+                            ", Size: " + str(highestGraph[2]) +
+                            ", Turns: " + str(highestGraph[3]) +
+                            ", Visits: " + str(highestGraph[4]) +
+                            ". Bounces: " + str(highestGraph[5]) +
+                            " Highest Fitness: " + str(highestGraph[6]))
+
+        axs[1].annotate(highestActionStr, (0,0), (0, -50), xycoords='axes fraction', textcoords='offset points', va='top')
+
         """
         colors = ['green', 'red',  # food, kills
                   'blue', 'pink',  # size, turns
@@ -310,7 +332,7 @@ def graphPlot(avg_fitness, avgGenes, avgActions):
                          '\n(this is more for visual representation than stats)')
         """
 
-        fig.set_size_inches(10, 9, forward=True)
+        fig.set_size_inches(20, 18, forward=True)
 
         plt.tight_layout()
         plt.show()
