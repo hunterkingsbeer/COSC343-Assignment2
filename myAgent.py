@@ -11,7 +11,7 @@ geneGraph = []
 actionsGraph = []
 highestGraph = np.zeros(7)
 
-generations = 100
+generations = 50
 trainingAgent = "random"
 trainingSchedule = [(trainingAgent, generations)]
 
@@ -47,7 +47,7 @@ class MyCreature:
         for row in range(5):
             for col in range(5):
                 creature = creaturePerc[row][col] if creaturePerc[row][col] < 0 else 0  # X > 0 = FRIEND. X < 0 = ENEMY
-                if creature < 0:  # ENEMY
+                """if creature < 0:  # ENEMY
 
                     # print("ENEMY")
                     self.alterActions(row, col, self.hunter, abs(creature), actions)  # HUNTER GENE
@@ -64,7 +64,7 @@ class MyCreature:
 
                     # print("WALL")
                     self.alterActions(row, col, self.indoors, wall, actions)  # INDOORS GENE
-                    self.alterActions(row, col, self.outdoors, wall, actions)  # OUTDOORS GENE
+                    self.alterActions(row, col, self.outdoors, wall, actions)  # OUTDOORS GENE"""
 
                 food = foodPerc[row][col]
                 if food == 1:  # FOOD
@@ -118,8 +118,8 @@ class MyCreature:
 def newGeneration(old_population):
 
     # ---------------------------------------------------------------------------------------------- THE VALUES --------
-    mutationRate = 0.2 # 0 to 1, representing a percentage -- Default 0.2-25
-    elitismRate = 0.4  # 0 to 1, representing a percentage -- Default 0.4-5
+    mutationRate = 0.05  # 0 to 1, representing a percentage -- Default 0.2-25
+    elitismRate = 0.2  # 0 to 1, representing a percentage -- Default 0.4-5
 
     printStats = True  # for chromosome stats
     # This function should also return average fitness of the old_population
@@ -179,8 +179,9 @@ def newGeneration(old_population):
 
         #""" NEW FITNESS
         fitness[n] += creature.enemy_eats * 8
+        #fitness[n] += creature.strawb_eats * 6
         fitness[n] += creature.size * 10
-        fitness[n] += 25 if creature.alive else 0
+        fitness[n] += 30 if creature.alive else 1
         #"""
 
         if highestActions[6] < fitness[n]:
@@ -233,9 +234,10 @@ def newGeneration(old_population):
 
     # At the end you need to compute average fitness and return it along with your new population
     avg_fitness = np.mean(fitness)
-    graphPlot(avg_fitness, avgGenes, avgActions, highestActions)
+    if printStats:
+        graphPlot(avg_fitness, avgGenes, avgActions, highestActions)
+        print("\nFITNESS: ")
 
-    print("\nFITNESS: ")
     return new_population, avg_fitness
 
 
@@ -335,6 +337,7 @@ def graphPlot(avg_fitness, avgGenes, avgActions, highestActions):
         fig.set_size_inches(20, 18, forward=True)
 
         plt.tight_layout()
+        plt.savefig('343plot')
         plt.show()
 
 

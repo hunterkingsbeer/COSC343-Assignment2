@@ -853,6 +853,7 @@ class Game:
                             """if avatar.energy != 1 and avatar.strawb_eats != 1:
                                 avatar.energy -= 1 # ----------------------------------------------------------------------- SHOULD BE +=
                                 avatar.strawb_eats -= 1 # ------------------------------------------------------------------ += """
+
                             avatar.energy += 1
                             avatar.strawb_eats += 1
 
