@@ -11,7 +11,7 @@ geneGraph = []
 actionsGraph = []
 highestGraph = np.zeros(7)
 
-generations = 50
+generations = 250
 trainingAgent = "random"
 trainingSchedule = [(trainingAgent, generations)]
 
@@ -47,7 +47,7 @@ class MyCreature:
         for row in range(5):
             for col in range(5):
                 creature = creaturePerc[row][col] if creaturePerc[row][col] < 0 else 0  # X > 0 = FRIEND. X < 0 = ENEMY
-                """if creature < 0:  # ENEMY
+                if creature < 0:  # ENEMY
 
                     # print("ENEMY")
                     self.alterActions(row, col, self.hunter, abs(creature), actions)  # HUNTER GENE
@@ -64,7 +64,7 @@ class MyCreature:
 
                     # print("WALL")
                     self.alterActions(row, col, self.indoors, wall, actions)  # INDOORS GENE
-                    self.alterActions(row, col, self.outdoors, wall, actions)  # OUTDOORS GENE"""
+                    self.alterActions(row, col, self.outdoors, wall, actions)  # OUTDOORS GENE
 
                 food = foodPerc[row][col]
                 if food == 1:  # FOOD
@@ -72,7 +72,6 @@ class MyCreature:
                     # print("FOOD")
                     self.alterActions(row, col, self.hungry, food, actions)  # HUNGRY GENE
                     self.alterActions(row, col, self.full, food, actions)  # FULL GENE
-
         return actions
 
     def alterActions(self, col, row, type, percep, actions):
@@ -162,27 +161,13 @@ def newGeneration(old_population):
         if highestActions[5] < creature.bounces:
             highestActions[5] = creature.bounces
 
-        """ JACKS FITNESS
-        fitness[n] += creature.turn * 0.5
-        fitness[n] += creature.enemy_eats * 9
-        fitness[n] += creature.strawb_eats * 6
-        fitness[n] += creature.alive 
-        """
 
-        """ ORIGINAL FITNESS
-        # MAX: 50 + 45 + 30(i guess?) + 30 (i guess?) =
-        fitness[n] += 50 if creature.alive else (creature.turn * 0.5)
-        fitness[n] += creature.strawb_eats * 5
-        fitness[n] += creature.enemy_eats * 10
-        fitness[n] += creature.squares_visited 
-        """
-
-        #""" NEW FITNESS
-        fitness[n] += creature.enemy_eats * 8
-        #fitness[n] += creature.strawb_eats * 6
+        """fitness[n] += creature.enemy_eats * 8
         fitness[n] += creature.size * 10
-        fitness[n] += 30 if creature.alive else 1
-        #"""
+        fitness[n] += 30 if creature.alive else 0
+        fitness[n] += creature.strawb_eats * 2"""
+
+        fitness[n] += creature.enemy_eats * 8
 
         if highestActions[6] < fitness[n]:
             highestActions[6] = fitness[n]
@@ -337,19 +322,20 @@ def graphPlot(avg_fitness, avgGenes, avgActions, highestActions):
         fig.set_size_inches(20, 18, forward=True)
 
         plt.tight_layout()
-        plt.savefig('343plot')
         plt.show()
 
 
 # chance = number between 0 and 1 (float)
+# Based on the set mutation rate, this method mutates a random single gene in the chromosome.
 def mutation(chance, chromosome):
     if np.random.rand() < chance:  # mutation
         chromosome[random.randint(0, len(chromosome)-1)] = np.random.rand()
     return chromosome
 
 
-# type 1 = random point crossover, type 2 = half/half, type 3 = random multi section crossover
-# just like in real life, this is all random
+# type "point" = random single gene crossover,
+# type "gene" = randomly crosses gene pairs,
+# type "section" = crosses
 def crossoverChromosome(chromosome1, chromosome2, crossType):
     newChromosome = []
     parents = [chromosome1, chromosome2]
@@ -367,9 +353,9 @@ def crossoverChromosome(chromosome1, chromosome2, crossType):
             newChromosome.append(parent[i])
             newChromosome.append(parent[i+1])
 
-    elif crossType == "half":
+    elif crossType == "section":
         for i in range(len(chromosome1)):
-            if i > len(chromosome1)/2:
+            if i > random.randint(0, len(chromosome1)):
                 newChromosome.append(chromosome1[i])
             else:
                 newChromosome.append(chromosome2[i])
