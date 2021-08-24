@@ -1,4 +1,4 @@
-# Genetic-Algorithm-Player
+# Genetic Algorithm Player
 
 COSC343 Assignment 2
 
