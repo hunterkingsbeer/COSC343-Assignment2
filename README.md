@@ -1,6 +1,6 @@
 # Genetic Algorithm Player
 
-COSC343 Assignment 2
+COSC343 Assignment 2.
 
 Using a genetic algorithm (involving tournament selection, a fitness function, mutations, and elitism) and machine learning, to evolve a population of agents to beat a random player.
 
